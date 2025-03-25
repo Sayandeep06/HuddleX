@@ -2,6 +2,7 @@ import { SignIn } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
 import React from 'react'
 import Image from 'next/image'
+import StreamProvider from '@/providers/StreamProvider'
 
 const MainLayout = async ({
     children
@@ -35,7 +36,9 @@ const MainLayout = async ({
     }
     return (
         <main className=''>
-            {children}
+            <StreamProvider>
+                {children}
+            </StreamProvider> 
         </main>
     )
 }

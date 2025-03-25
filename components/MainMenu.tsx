@@ -14,7 +14,7 @@ import { useStreamVideoClient } from "@stream-io/video-react-sdk"
 import { toast } from "sonner"
 
 
-const initialValues = {
+const initialValues = { 
     dateTime: new Date(),
     description: '',
     link: '',
@@ -31,64 +31,69 @@ const MainMenu = () => {
 
 
     const createMeeting = async () => {
-      if(!user) return router.push('/login')
-      if(!client) return router.push('/')
-
+      if (!user) return router.push('/login');
+      if (!client) {
+        toast('Meeting client is not initialized', { duration: 3000 });
+        return;
+      }
+    
       try {
-        if (!values.dateTime) {
-          toast('Please select a date and time',{
-             duration: 3000,
-            className: 'bg-gray-300 rounded-3xl py-8 px-5 justify-center'
+        if (!(values.dateTime instanceof Date) || isNaN(values.dateTime.getTime())) {
+          toast('Please select a valid date and time', {
+            duration: 3000,
+            className: 'bg-gray-300 rounded-3xl py-8 px-5 justify-center',
           });
           return;
         }
-
+    
         const id = crypto.randomUUID();
         const call = client.call('default', id);
-        if (!call) throw new Error('Failed to create meeting');
-        const startsAt =
-        values.dateTime.toISOString() || new Date(Date.now()).toISOString();
+    
+        if (!call) throw new Error('Failed to create meeting instance');
+    
+        const startsAt = values.dateTime.toISOString();
         const description = values.description || 'No Description';
-        await call.getOrCreate({
+    
+        console.log("Creating meeting with ID:", id);
+    
+        // Instead of `getOrCreate`, explicitly use `create`
+        await call.create({
           data: {
             starts_at: startsAt,
-            custom: {
-              description,
-            },
+            custom: { description },
           },
         });
-
+    
+        console.log("Meeting created successfully");
+    
         await call.updateCallMembers({
           update_members: [{ user_id: user.id }],
-        })
-
+        });
+    
+        console.log("Meeting members updated");
+    
         if (meetingState === 'Instant') {
           router.push(`/meeting/${call.id}`);
-          toast('Setting up your meeting',{
+          toast('Setting up your meeting', {
             duration: 3000,
             className: '!bg-gray-300 !rounded-3xl !py-8 !px-5 !justify-center',
           });
-        } 
-
-        if (meetingState === 'Schedule') {
-          router.push('/upcoming')
-          toast(`Your meeting is scheduled at ${values.dateTime}`,{
+        } else if (meetingState === 'Schedule') {
+          router.push('/upcoming');
+          toast(`Your meeting is scheduled at ${values.dateTime}`, {
             duration: 5000,
             className: '!bg-gray-300 !rounded-3xl !py-8 !px-5 !justify-center',
           });
         }
-
-      } catch(err: any) {
-        toast(`Failed to create Meeting ${err.message}`,{
+    
+      } catch (err: any) {
+        console.error("Meeting creation error:", err);
+        toast(`Failed to create Meeting: ${err.message}`, {
           duration: 3000,
           className: '!bg-gray-300 !rounded-3xl !py-8 !px-5 !justify-center',
-        }
-        )
+        });
       }
-      
-
-      
-    } 
+    };
 
     useEffect(() => {
       if (meetingState) {
@@ -96,7 +101,7 @@ const MainMenu = () => {
       }
     }, [meetingState]);
 
-    if (!client || !user) return <Loading />;
+     if (!client || !user) return <Loading />;
 
 
     return (
@@ -104,7 +109,7 @@ const MainMenu = () => {
             <Dialog >
                 <DialogTrigger >
                     <MenuItemCard
-                            img="/assets/new-meeting.svg"
+                            img="/new-meeting.svg"
                             title="New Meeting"
                             bgColor='bg-orange-500'
                             hoverColor= 'hover:bg-orange-800'
@@ -143,7 +148,7 @@ const MainMenu = () => {
       <Dialog >
           <DialogTrigger>
             <MenuItemCard
-            img="/assets/join-meeting.svg"
+            img="/join.png"
             title="Join Meeting"
             bgColor="bg-blue-600"
             hoverColor= 'hover:bg-blue-800'
@@ -181,7 +186,7 @@ const MainMenu = () => {
       <Dialog >
           <DialogTrigger>
               <MenuItemCard
-              img="/assets/calendar.svg"
+              img="/booking.png"
               title="Schedule"
               bgColor="bg-blue-600"
               hoverColor= 'hover:bg-blue-800'
@@ -232,7 +237,7 @@ const MainMenu = () => {
       </Dialog>
 
   <MenuItemCard
-    img="/assets/recordings2.svg"
+    img="/rec-button.png"
     title="Recordings"
     bgColor="bg-blue-600"
     hoverColor= 'hover:bg-blue-800'
